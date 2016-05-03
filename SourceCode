@@ -1,0 +1,43 @@
+//these are the header files needed to access the TivaWare APIs
+//the use of <> restricts the search to path to only the specified path
+//the use of " " will start the search in the project directory
+//for the standard includes, use <> to assure accessing the original, standard files
+
+#include <stdint.h> //Variable definition for the C99 standards
+#include <stdbool.h> //Boolean definition for the C99 standards
+#include "inc/hw_memmap.h" //Macros defining the memory map of the TIVA C series device
+#include "inc/hw_types.h" //defines common types and macros
+#include "driverlib/sysctl.h" //Defines and Macros for System Control API of DriverLib
+#include "driverlib/gpio.h" //Defines and macros for GPIO API of DriverLib
+
+uint8_t ui8PinData=2; //creates and integer ui8PinData and initializes it to 2
+					  //will be used to cycle through the 3 LEDs, one at a time
+
+int main(void)
+{
+	//this will configure the system clock to run using a 16MHz crystal on the main
+	//oscillator, driving the 400MHz PLL. The system clock oscillates at this frequency
+	//but there is a default /2 divider in the clock path and we add another /5
+	//totalling a /10, making the system clock oscillate at 40MHz
+	SysCtlClockSet(SYSCTL_SYSDIV_5|SYSCTL_USE_PLL|SYSCTL_XTAL_16MHZ|SYSCTL_OSC_MAIN);
+
+
+	//it is essential to enable the clock for the peripheral before calling a
+	//peripheral specific library
+	//Configure the three GPIO pins connected to the LEDs as outputs
+	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+	GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3);
+
+
+	//while loop sends a "1" or "0" to the selected GPIO pin and an equal delay between the two
+	while(1)
+	{
+		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, ui8PinData);
+		SysCtlDelay(1000000);//loop times in TivaWare, parameter is loop count; 1 loop = 3cpu cycles
+		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, 0x00);
+		SysCtlDelay(1000000);
+		if(ui8PinData==8) {ui8PinData=2;} else {ui8PinData=ui8PinData*2;}
+	}
+}
+
+
